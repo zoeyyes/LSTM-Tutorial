@@ -30,8 +30,9 @@ Basic ideas of naive RNN
 after CNN & before SVM
 
 * What could serve as a hook to capture the reader's interest?  
-A metaphor that descibes the mechanism using how human brain works   
-
+1.a metaphor that descibes the mechanism using how human brain works   
+2.comparision between RNN and LSTM
+3.various applications of the powerful technique
 
 * What skill(s) will you teach ("How to...")?  
 1.how to 
