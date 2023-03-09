@@ -17,14 +17,13 @@ A basic plan
   LSTM  
   
 * What theoretical concept(s) must be explained?  
-1.definition of the activation function tanh  
-2.why long/short term memory works
-3.how to apply long/short memory mechanism in neural netwok
+1.why long/short term memory works  
+2.how to apply long/short memory mechanism in neural netwok
 
 
 * Backtracking: What simpler concepts can be used to explain it (them)? What will you assume your audience already knows?  
-Basic ideas of naive RNN
-
+1.Basic ideas of naive RNN
+2.Definition of the activation function tanh  
 
 * Where could this fit in this course? Before what, after what?   
 after CNN & before SVM
