@@ -38,7 +38,7 @@ after CNN & before SVM
 
 * What might be the "wow" factor be in your project? (eg. a fun or surprising application, a cool plot, an R Shiny animation, a nice explanation of a theorem,...)  
 1. an interesting dataset
-2. 
+2. the reason of choosing LSTM compared to other models
 
 Timeline:  
 
