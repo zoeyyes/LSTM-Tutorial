@@ -11,9 +11,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Recurrent Neural Network (RNN) basic knowledge
 
 The basic network looks like this:
-
 ```{r}
-knitr::include_graphics("basic network.png")
+# This plot can not be shown in the html, if you want to see, uncomment it and run in Rstudio:
+#knitr::include_graphics("basic network.png")
 ```
 
 Input x, with adding weights W and bias b, and going through the activation function f, output y=f(Wx+b).
@@ -104,7 +104,7 @@ If we want an analogy of this theory. Basically in a sentence if the cell state 
 ```{r}
 knitr::include_graphics("forget gate.png")
 ```
-If we write the formula as matrix expression (W value is weights and b value is bias):(?bias dimension)
+If we write the formula as matrix expression (W value is weights and b value is bias):
 $$
 \begin{align}
 \boldsymbol{F}_{t}&=\sigma(\boldsymbol{X}_{t}\boldsymbol{W}_{xf}+\boldsymbol{H}_{t-1}\boldsymbol{W}_{hf}+\boldsymbol{b}_{f})\\
@@ -130,11 +130,11 @@ In an analogy, it can be treated in a sentence as adding the information of the 
 ```{r}
 knitr::include_graphics("input gate.png")
 ```
-If we write the formula as matrix expression (W value is weights and b value is bias):(?tilda)
+If we write the formula as matrix expression (W value is weights and b value is bias):
 $$
 \begin{align}
 \boldsymbol{I}_{t}&=\sigma(\boldsymbol{X}_{t}\boldsymbol{W}_{xi}+\boldsymbol{H}_{t-1}\boldsymbol{W}_{hi}+\boldsymbol{b}_{i})\\
-\boldsymbol{Ctilde}_{t}&=\tanh(\boldsymbol{X}_{t}\boldsymbol{W}_{xc}+\boldsymbol{H}_{t-1}\boldsymbol{W}_{hc}+\boldsymbol{b}_{c})\\
+\boldsymbol{\tilde{C}}_{t}&=\tanh(\boldsymbol{X}_{t}\boldsymbol{W}_{xc}+\boldsymbol{H}_{t-1}\boldsymbol{W}_{hc}+\boldsymbol{b}_{c})\\
 Dimensions:\\
 \boldsymbol{X}_{t(n\times d)}\\
 \boldsymbol{W}_{xi(d\times h)}; \boldsymbol{W}_{xc(d\times h)}\\
@@ -154,13 +154,13 @@ We multiply the previous cell state C_(t-1) with f_t, which is removing the info
 ```{r}
 knitr::include_graphics("cell state update.png")
 ```
-?If we write the formula as matrix expression (W value is weights and b value is bias):
+If we write the formula as matrix expression:
 $$
 \begin{align}
-\boldsymbol{C}_{t}&=\boldsymbol{F}_{t}\boldsymbol{C}_{t-1}+\boldsymbol{I}_{t}\boldsymbol{C}_{t}\\
+\boldsymbol{C}_{t}&=\boldsymbol{F}_{t}\odot\boldsymbol{C}_{t-1}+\boldsymbol{I}_{t}\odot\boldsymbol{\tilde{C}}_{t}\\
 Dimensions:\\
 \boldsymbol{F}_{t(n\times h)}\\
-\boldsymbol{C}_{t-1(n\times h)}; \boldsymbol{C}_{t(n\times h)}\\
+\boldsymbol{C}_{t-1(n\times h)}; \boldsymbol{\tilde{C}}_{t(n\times h)}\\
 \boldsymbol{I}_{t(n\times h)}\\
 \end{align}
 $$
@@ -183,11 +183,11 @@ In the analogy of a sentence, when we see a personal pronoun, we may need to out
 ```{r}
 knitr::include_graphics("output gate.png")
 ```
-If we write the formula as matrix expression (W value is weights and b value is bias):
+If we write the formula as matrix expression (W value is weights and b value is bias) (markdown):
 $$
 \begin{align}
 \boldsymbol{O}_{t}&=\sigma(\boldsymbol{X}_{t}\boldsymbol{W}_{xo}+\boldsymbol{H}_{t-1}\boldsymbol{W}_{ho}+\boldsymbol{b}_{o})\\
-\boldsymbol{H}_{t}&=\boldsymbol{O}_{t}\tanh(\boldsymbol{C}_{t})\\
+\boldsymbol{H}_{t}&=\boldsymbol{O}_{t}\odot\tanh(\boldsymbol{C}_{t})\\
 Dimensions:\\
 \boldsymbol{X}_{t(n\times d)}\\
 \boldsymbol{W}_{xo(d\times h)}; \boldsymbol{W}_{ho(h\times h)}\\
@@ -195,7 +195,7 @@ Dimensions:\\
 \boldsymbol{b}_{o(n\times h)}\\
 \end{align}
 $$
-PAY ATTENTION: Here the multiplication of O_t and tanh(C_t) is Hadamard product, which is the multiplication of the elements in the same position of matrices. It conducts the multiplication of matrices in the same dimension.?
+PAY ATTENTION: Here the multiplication of O_t and tanh(C_t) is Hadamard product, which is the multiplication of the elements in the same position of matrices. It conducts the multiplication of matrices in the same dimension.
 
 Here is a gif for clearer visualization:
 ```{r}
