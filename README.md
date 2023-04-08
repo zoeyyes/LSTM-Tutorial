@@ -5,7 +5,7 @@
 
 Content  
 1. Theory  
-2. Application  
+2. Implementation in R  
 
 Dataset  
 
