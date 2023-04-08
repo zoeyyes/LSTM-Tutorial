@@ -1,0 +1,341 @@
+---
+title: "LSTM Tutorial"
+author: "Zoey"
+date: "2023-03-25"
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    toc: true
+    toc_depth: 3
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+# Application: Stock Prediction
+
+## Packages Required
+Below are all packages required for the implementation:
+
+```
+library(ggplot2)
+library(keras)
+library(dplyr)
+library(purrr)
+library(keras)
+library(zoo)
+```
+```{r}
+library(ggplot2)
+library(keras)
+library(dplyr)
+library(purrr)
+library(keras)
+library(zoo)
+```
+
+
+## An Overview of the Dataset
+
+**Getting the data**  
+  
+The dataset is obtained from the Yahoo Finance website. Yahoo Finance is a wealthy source of financial market data for identifying promising investments. To access this data, we utilized the yfinance library, which provides a Pythonic and threaded approach to downloading market data from Yahoo. The saved dataset and all necessary codes contained within a Python file are located in the same folder where this file is under.
+
+**Content of the dataset**  
+
+```{r cars, echo = TRUE}
+rawdata<-read.csv("raw_data.csv")
+rawdata$Date<-as.Date(rawdata$Date)
+data<-rawdata[order(rawdata$Date,decreasing = TRUE),]
+head(data)
+```
+As shown above, the dataset contains 8 columns:
+  
+  + Date: the trading date  
+  
+  + Open: opening price at which the stock is traded during the regular trading date  
+  
+  + High: the highest price at which the stock is traded during the regular trading date  
+  
+  + Low: the lowest price at which the stock is traded during the regular trading date    
+  
+  + Close: the last price at which the stock is traded during the regular trading date  
+  
+  + Adj.Close: the amended closing price after accounting for any corporate actions (e.g. paying off the dividends) 
+  
+  + Volume: the amount of shares of security traded within the trading day    
+  
+  + company_name: name of the specific company, including Amazon, Apple, Microsoft, Google      
+
+
+**Visualization of Closing Price**   
+
+Let us plot the adjusted closing prices of the 4 companies respectively, starting from March 28th, 2022 up to the present time.  
+  
+```
+ggplot(data, aes(x = Date, y = Adj.Close,color=company_name)) +
+  geom_line() +
+  scale_x_date(date_breaks = "4 months")+
+  facet_wrap(~ company_name) +
+  labs(x = NULL, y = "Adj Close", title = "Historical View of Closing Price")
+```
+
+```{r pressure}
+ggplot(data, aes(x = Date, y = Adj.Close,color=company_name)) +
+  geom_line() +
+  scale_x_date(date_breaks = "4 months")+
+  facet_wrap(~ company_name) +
+  labs(x = NULL, y = "Adj Close", title = "Historical View of Closing Price")
+```
+  
+Analysis: The graph indicates a declining trend in closing prices for all four companies in 2022, potentially related to the recession caused by the COVID-19. In contrast, the closing prices after 2023 are generally on the rise, which may be associated with the dying down of the virus. Meanwhile, it is not difficult to tell that Microsoft has the highest average closing price. Therefore, we decide to focus on the stock prediction of Microsoft.  
+
+```{r}
+MICROSOFT<-data[data$company_name=='MICROSOFT',]
+ggplot(MICROSOFT, aes(x = Date, y = Adj.Close)) +
+  geom_line() +
+  scale_x_date(date_breaks = "4 months")+
+  labs(x = NULL, y = "Adj Close", title = "[Microsoft] Historical View of Closing Price")
+```
+
+  
+## Preprocessing of the dataset  
+
+**find a larger dataset**
+
+To ensure we have sufficient data for the time series prediction, we obtained a larger  dataset containing the price information of Microsoft, starting from 2018-01-02 till now. (around 5 year)  
+
+```{r}
+ds<-read.csv("msft_data.csv")
+```
+
+```
+ds<-read.csv("msft_data.csv")
+```
+
+**split the data**   
+  
+To prepare the data for the time series prediction, we choose lag=60. Afterwards, we split the whole dataset into two parts: 80% of the dataset to be the train set, 20% to be the test set.  
+
+```{r}
+MCST<-ds$Adj.Close
+lag<-60
+X<-matrix(,ncol = lag)
+Y<-matrix(,ncol = 1)
+
+pre<-function(data,lag){
+  for(i in (lag+1):length(data)){
+    #print(i-lag)
+    X=rbind(X,t(data[(i-lag):(i-1)]))
+    Y=rbind(Y,data[i])
+  }
+  cbind(X,Y)
+}
+
+MCST_ts=pre(MCST,60)[-1,]
+training_data_len = floor(nrow(MCST_ts) * .8 )
+X_train<-scale(MCST_ts[1:training_data_len,1:60])
+Y_train<-scale(MCST_ts[1:training_data_len,61])
+X_test<-scale(MCST_ts[(training_data_len+1):nrow(MCST_ts),1:60])
+Y_test<-scale(MCST_ts[(training_data_len+1):nrow(MCST_ts),61])
+
+```
+
+```
+MCST<-ds$Adj.Close
+lag<-60
+X<-matrix(,ncol = lag)
+Y<-matrix(,ncol = 1)
+
+pre<-function(data,lag){
+  for(i in (lag+1):length(data)){
+    #print(i-lag)
+    X=rbind(X,t(data[(i-lag):(i-1)]))
+    Y=rbind(Y,data[i])
+  }
+  cbind(X,Y)
+}
+
+MCST_ts=pre(MCST,60)[-1,]
+training_data_len = floor(nrow(MCST_ts) * .8 )
+X_train<-scale(MCST_ts[1:training_data_len,1:60])
+Y_train<-scale(MCST_ts[1:training_data_len,61])
+X_test<-scale(MCST_ts[(training_data_len+1):nrow(MCST_ts),1:60])
+Y_test<-scale(MCST_ts[(training_data_len+1):nrow(MCST_ts),61])
+```
+
+## Building the Model  
+
+**create and compile model1**
+```
+model1 <- keras_model_sequential() %>%
+  layer_lstm(units = 128, return_sequences = TRUE, input_shape = c(dim(X_train)[2], 1)) %>%
+  layer_lstm(units = 64, return_sequences = FALSE) %>%
+  layer_dense(units = 25) %>%
+  layer_dense(units = 1)
+
+model1 %>% compile(
+  loss = "mean_squared_error",
+  optimizer = optimizer_adam()
+)
+
+summary(model1)
+```
+
+```{R}
+model1 <- keras_model_sequential() %>%
+  layer_lstm(units = 128, return_sequences = TRUE, input_shape = c(dim(X_train)[2], 1)) %>%
+  layer_lstm(units = 64, return_sequences = FALSE) %>%
+  layer_dense(units = 25) %>%
+  layer_dense(units = 1)
+
+model1 %>% compile(
+  loss = "mean_squared_error",
+  optimizer = optimizer_adam()
+)
+summary(model1)
+```
+**create and compile model2**
+```{R}
+model2 <- keras_model_sequential() %>%
+  layer_lstm(units = 128, return_sequences = TRUE, input_shape = c(dim(X_train)[2], 1)) %>%
+  layer_lstm(units = 64, return_sequences = FALSE) %>%
+  layer_dense(units = 25) %>%
+  layer_dense(units = 1)
+
+model2 %>% compile(
+  loss = "mean_squared_error",
+  optimizer = optimizer_adam()
+)
+
+summary(model2)
+```
+
+```
+model2 <- keras_model_sequential() %>%
+  layer_lstm(units = 128, return_sequences = TRUE, input_shape = c(dim(X_train)[2], 1)) %>%
+  layer_lstm(units = 64, return_sequences = FALSE) %>%
+  layer_dense(units = 25) %>%
+  layer_dense(units = 1)
+
+model2 %>% compile(
+  loss = "mean_squared_error",
+  optimizer = optimizer_adam()
+)
+```
+
+**fit the models**  
+```{R}
+set.seed(123)
+history1 <- model1 %>% fit(
+  X_train, Y_train,
+  batch_size = 200,
+  epochs = 10
+)
+```
+
+```
+set.seed(123)
+history1 <- model1 %>% fit(
+  X_train, Y_train,
+  batch_size = 200,
+  epochs = 10
+)
+```
+
+```{R}
+set.seed(123)
+history2 <- model2 %>% fit(
+  X_train, Y_train,
+  batch_size = 1,
+  epochs = 10
+)
+```
+
+```
+set.seed(123)
+history2 <- model2 %>% fit(
+  X_train, Y_train,
+  batch_size = 1,
+  epochs = 10
+)
+```
+
+
+**plot the loss function history**
+```
+LossHistory1 <- as.data.frame(list(epochs=1:history1$params$epochs,loss=history1$metrics$loss))
+ggplot(LossHistory1,mapping=aes(x=epochs,y=loss))+geom_point()
+```
+
+```{R}
+LossHistory1 <- as.data.frame(list(epochs=1:history1$params$epochs,loss=history1$metrics$loss))
+ggplot(LossHistory1,mapping=aes(x=epochs,y=loss))+geom_point() 
+```
+
+```
+LossHistory2 <- as.data.frame(list(epochs=1:history2$params$epochs,loss=history2$metrics$loss))
+ggplot(LossHistory2,mapping=aes(x=epochs,y=loss))+geom_point()
+```
+
+```{R}
+LossHistory2 <- as.data.frame(list(epochs=1:history2$params$epochs,loss=history2$metrics$loss))
+ggplot(LossHistory2,mapping=aes(x=epochs,y=loss))+geom_point()
+```
+
+
+## Evaluation
+
+```
+y_predicted1<-predict(model1,X_test)
+MSE1<-mean((y_predicted1-Y_test)^2)
+MSE1
+```
+
+```{R}
+y_predicted1<-predict(model1,X_test)
+MSE1<-mean((y_predicted1-Y_test)^2)
+MSE1
+```
+
+```
+y_predicted2<-predict(model2,X_test)
+MSE2<-mean((y_predicted2-Y_test)^2)
+MSE2
+```
+
+```{R}
+y_predicted2<-predict(model2,X_test)
+MSE2<-mean((y_predicted2-Y_test)^2)
+MSE2
+```
+
+
+## Visualisation of the Predicted Results
+```
+ind<-1:length(y_predicted)
+comparison<-as.data.frame(cbind(ind,y_predicted,Y_test))
+colnames(comparison)<-c("index","predicted","real")
+
+ggplot(comparison) +
+  geom_line(aes(x=ind,y=predicted),color="red") +
+  geom_line(aes(x=ind,y=real))
+  
+```
+
+```{R}
+index<-1:length(y_predicted1)
+comparison<-as.data.frame(cbind(index,y_predicted1,y_predicted2,Y_test))
+colnames(comparison)<-c("index","predicted1","predicted2","real")
+
+ggplot(comparison) +
+  geom_line(aes(x=index,y=predicted1),color="red") +
+  geom_line(aes(x=index,y=predicted2),color="blue") +
+  geom_line(aes(x=index,y=real))+
+  labs(x=NULL,y="Closing Price",title = "Prediction of Closing Prices")
+  
+```
+
