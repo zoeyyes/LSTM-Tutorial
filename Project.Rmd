@@ -25,32 +25,38 @@ In these situations, we will use Recurrent Neural Network (RNN) to deal with tho
 
 RNN has added the theory of "hidden state", which can extract the features of sequential data and then transfer to output. Here is an example of calculating hidden state h:
 ```{r}
-knitr::include_graphics("hidden state 1.png")
+knitr::include_graphics("plots and gif used/hidden state 1.png")
 ```
+
 It will be similar to calculate the other hidden states h2, h3 and h4, with the same parameters U, W and b:
 ```{r}
-knitr::include_graphics("hidden state 2.png")
+knitr::include_graphics("plots and gif used/hidden state 2.png")
 ```
 ```{r}
-knitr::include_graphics("hidden states.png")
+knitr::include_graphics("plots and gif used/hidden states.png")
 ```
 
 And then calculate the output y with hidden state h:
 ```{r}
-knitr::include_graphics("y1.png")
+knitr::include_graphics("plots and gif used/y1.png")
 ```
+
 With the same paramters V and c, we can calculate all the y outputs:
 ```{r}
-knitr::include_graphics("y outputs.png")
+knitr::include_graphics("plots and gif used/y outputs.png")
 ```
+
 Suppose when our human brains are thinking, of course we will not conduct the thinking process with a totally empty brain at anytime, we will always think based on our memory of conclusion for our previous thinking. Traditional normal neural networks can not simulate this process, but RNN can achieve that with special characteristics:
 ```{r}
-knitr::include_graphics("RNN.png")
+knitr::include_graphics("plots and gif used/RNN.png")
 ```
+
 For each RNN module A, it takes X_t as input and output h_t. This action will keep looping and bring the information to the next RNN module. So it will not forget the information from previous step and can therefore simulate the human brain neural network. That also shows why from the previous picture when calculating h_t, it will use the last h value of h_(t-1). (Show the previous picture again:)
 ```{r}
-knitr::include_graphics("hidden state 2.png")
+knitr::include_graphics("plots and gif used/hidden state 2.png")
 ```
+
+
 ## RNN disadvantage: The problem of Long-term Dependencies
 
 Consider a sentence like this: "The fish is in the river."
@@ -81,19 +87,19 @@ When your brain reads this comment, it will only memorize the important informat
 
 The basic structure of LSTM:
 ```{r}
-knitr::include_graphics("LSTM structure.png")
+knitr::include_graphics("plots and gif used/LSTM structure.png")
 ```
 The activation function tanh(the hyperbolic tangent) is used to adjust the value going through the network to be between -1 and 1. The activation function sigmoid is used to adjust the value to be between 0 and 1, when any value multiply with 0, the result is 0 so this information will be forgotten; when any value multiply with 1, the result is the value itself so this information will be kept.
 
 The "memory" of LSTM can be called as memory cells, it takes as inputs the previous state h_(t-1) and current x value x_t. These memory cells will decide which information will be kept or forgotten. This way can effectively keep the related information from a long time ago. Actually the key point of LSTM is the cell state (C_t):
 ```{r}
-knitr::include_graphics("cell state.png")
+knitr::include_graphics("plots and gif used/cell state.png")
 ```
-(To understand the plot: circle node means pointwise operation, e.g."x" means multiply; "+" means plus.
-                         rectangle node means neural network layer.
-                         arrow means vector transfer.
-                         arrows converging means concatenate.
-                         arrow diverging means copy.)
+(To understand the plot: Circle node means pointwise operation, e.g."x" means multiply; "+" means plus.
+                         Rectangle node means neural network layer.
+                         Arrow means vector transfer.
+                         Arrows converging means concatenate.
+                         Arrow diverging means copy.)
 LSTM has three different gate structures: forget gate, input gate and output gate, to control whether the information can pass or not.
 
 # Forget gate
@@ -102,7 +108,7 @@ The first step in LSTM is to decide which information in the cell state to forge
 
 If we want an analogy of this theory. Basically in a sentence if the cell state knows the gender of the subject, the correct personal pronoun will be chosen. When later we see a new subject, we will need to forget the information of the previous subject.
 ```{r}
-knitr::include_graphics("forget gate.png")
+knitr::include_graphics("plots and gif used/forget gate.png")
 ```
 If we write the formula as matrix expression (W value is weights and b value is bias):
 $$
@@ -118,8 +124,9 @@ Dimensions:\\
 $$
 Here is a gif for clearer visualization:
 ```{r}
-knitr::include_graphics("forget gate gif.gif")
+knitr::include_graphics("plots and gif used/forget gate gif.gif")
 ```
+
 # Input gate
 
 The next step is to decide which new information to be kept in the cell state, which contains two parts:
@@ -128,7 +135,7 @@ Part 2. Use the tanh layer to create a candidate memory cell to be added to the 
 
 In an analogy, it can be treated in a sentence as adding the information of the gender for a new subject in the cell state, to replace the old and forgotten subject.
 ```{r}
-knitr::include_graphics("input gate.png")
+knitr::include_graphics("plots and gif used/input gate.png")
 ```
 If we write the formula as matrix expression (W value is weights and b value is bias):
 $$
@@ -145,14 +152,15 @@ Dimensions:\\
 $$
 Here is a gif for clearer visualization:
 ```{r}
-knitr::include_graphics("input gate gif.gif")
+knitr::include_graphics("plots and gif used/input gate gif.gif")
 ```
-# cell state
+
+# Cell state
 
 Now it is time to update the cell state from C_(t-1) to C_t. The previous steps have decided the objectives of what to do, now is the time to achieve them.
 We multiply the previous cell state C_(t-1) with f_t, which is removing the information to be forgotten. The add it with i_t times C_t_tilde. The result is the new memory cell state C_t.
 ```{r}
-knitr::include_graphics("cell state update.png")
+knitr::include_graphics("plots and gif used/cell state update.png")
 ```
 If we write the formula as matrix expression:
 $$
@@ -167,13 +175,14 @@ $$
 PAY ATTENTION: Here the two multiplications are Hadamard product, which is the multiplication of the elements in the same position of matrices. It conducts the multiplication of matrices in the same dimension.
 Hadamard product exmaple:
 ```{r}
-knitr::include_graphics("Hadamard product.png")
+knitr::include_graphics("plots and gif used/Hadamard product.png")
 ```
 
 Here is a gif for clearer visualization:
 ```{r}
-knitr::include_graphics("cell state update gif.gif")
+knitr::include_graphics("plots and gif used/cell state update gif.gif")
 ```
+
 # Output gate
 
 At last, we need to confirm which value to output.
@@ -181,7 +190,7 @@ We need to first run a sigmoid layer to decide which part of the cell state C_t 
 
 In the analogy of a sentence, when we see a personal pronoun, we may need to output the information related to a verb. For example, we need to output the information whether the personal pronoun is in singular form or plural form, so that if the next word is a verb, we will know the proper changes of the verb, for example if the pronoun is a third-person singular pronoun, then we need to add an "s" after the verb.
 ```{r}
-knitr::include_graphics("output gate.png")
+knitr::include_graphics("plots and gif used/output gate.png")
 ```
 If we write the formula as matrix expression (W value is weights and b value is bias) (markdown):
 $$
@@ -199,7 +208,7 @@ PAY ATTENTION: Here the multiplication of O_t and tanh(C_t) is Hadamard product,
 
 Here is a gif for clearer visualization:
 ```{r}
-knitr::include_graphics("output gate gif.gif")
+knitr::include_graphics("plots and gif used/output gate gif.gif")
 ```
 
 
